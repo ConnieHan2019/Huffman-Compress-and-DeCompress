@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 
 public class SingleHence {
+    public static boolean success = false;
     static HashMap<Integer, Integer> map = new HashMap<Integer,Integer>();
     static HashMap<Integer, String> symboltoCode = new HashMap<Integer,String>();
     //static HashMap<Integer, Byte> symboltoCode = new HashMap<Integer,Byte>();
@@ -21,7 +22,7 @@ public class SingleHence {
          System.out.println("Compression done..");
          file.delete();
          System.out.println(file + ".huf created..");
-
+      success = true;
      }
 
 
@@ -39,7 +40,7 @@ public class SingleHence {
         byte[] byteStream= displayByte(file);
         buildTree(map);
         int f =setPrefixcodes();
-        System.out.println("setPrefixedCodes+ "+f);
+        //System.out.println("setPrefixedCodes+ "+f);
         Node node = priorityQ.peek();//frequency最低，huffman码最长的node
         genPrefixcodes(node ,"");
         mapCodes(node);
@@ -73,8 +74,8 @@ public class SingleHence {
         BufferedOutputStream  br = new BufferedOutputStream(new FileOutputStream(file.toString() + ".huf"));
         for (int j = 0; j < comp.length(); j++) {
             char a = comp.charAt(j);
-            br.write(a);
-
+            int d = (int)a;
+            br.write(d);
         }
         String str ="";
         String copyStr = "";
@@ -89,7 +90,7 @@ public class SingleHence {
                 size = str.length();
                 copyStr = str.substring(0,8);
                 int c = Integer.parseInt(copyStr,2);
-                System.out.println(c);
+
                 lenOfStream++;
                 str = str.substring(8,size);
                 int d = c;
@@ -104,7 +105,7 @@ public class SingleHence {
             copyStr = str.substring(0, 8);
             int c = Integer.parseInt(copyStr, 2);
             str = str.substring(8, size);
-            int d = c;
+
             lenOfStream++;
             br.write(c);
             copyStr = "";
@@ -119,7 +120,7 @@ public class SingleHence {
 
         }
         br.close();
-        System.out.println("lenOfStream: "+lenOfStream);
+       // System.out.println("lenOfStream: "+lenOfStream);
 
     }
 
@@ -136,7 +137,7 @@ public class SingleHence {
         if (node.left ==null && node.right == null)
         {
             //Integer intCode = Integer.parseInt(node.code,2);
-            //Byte B=(byte)(0XFF & intCode);
+          //  //Byte B=(byte)(0XFF & intCode);
             symboltoCode.put(node.symbol, node.code);
             CodetoSymb.put(node.code, node.symbol);
         }
@@ -157,7 +158,7 @@ public class SingleHence {
 
     public static int setPrefixcodes()
     {
-         System.out.println("nodeCount"+nodeCount);
+       //  System.out.println("nodeCount"+nodeCount);
         for (int w=0;w<nodeCount-1;w++)
         {
             Node parent = new Node (0);
@@ -175,7 +176,7 @@ public class SingleHence {
         Node freq = priorityQ.peek();
         //多少byte（所有频率之和）
         int finalfreq = freq.getFrequency();
-        System.out.println("finalfreq: "+finalfreq);
+      //  System.out.println("finalfreq: "+finalfreq);
         return finalfreq;
     }
 
@@ -215,7 +216,7 @@ public class SingleHence {
     {
         FileInputStream fis = null;
         int i = (int) file.length();//返回字节数(byte)
-        System.out.println("file length:  " + i);
+        //System.out.println("file length:  " + i);
         byte[] bye = new byte[i];
         try
         {

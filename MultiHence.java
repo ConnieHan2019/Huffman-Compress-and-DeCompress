@@ -8,41 +8,59 @@ import java.util.PriorityQueue;
 public class MultiHence {
     //Encoding & Compression java
 
+     public static boolean success = false;
       static String sourcepath;
       public static int numberOfFile;
       static ArrayList<Integer>lengthOfStream = new ArrayList<>();
+    static ArrayList<String>emptyFileName = new ArrayList<>();
        static ArrayList<File> multifile = new ArrayList<>();
        static ArrayList<byte[]> multiByteStream = new ArrayList<>();
         static HashMap<Integer, Integer> map = new HashMap<Integer,Integer>();
         static HashMap<Integer, String> symboltoCode = new HashMap<Integer,String>();
-
+        static ArrayList<String>fileName = new ArrayList<>();
         static HashMap<String, Integer> CodetoSymb = new HashMap<String,Integer>();
         static PriorityQueue<Node> priorityQ;
         static  int nodeCount = 0;
         static int[]multiNodeCount ;
 
+
         public MultiHence(String source){
             this.sourcepath = source;
         }
+
+
         public static void start()throws IOException{
             File file = new File(sourcepath);
 
-            setAllFiles();
-            compress(file);
+           if(setAllFiles()) {
+               compress(file);
+           }else{
+               String str = file+".huf";
+               File emptyFile = new File(str);
+               emptyFile.createNewFile();
+           }
             System.out.println("Compression done..");
-           // file.delete();
+          file.delete();
             System.out.println(file + ".huf created..");
+            success = true;
 
         }
-        public static void setAllFiles() throws IOException
+        public static boolean setAllFiles() throws IOException
         {
-
-                for(String fileName : getAllFile(sourcepath,true)){
+                  fileName = getAllFile(sourcepath,true);
+                  numberOfFile = fileName.size();
+            multiNodeCount = new int[numberOfFile];
+            ArrayList<String> getAll = getAllFile(sourcepath,true);
+            if(getAll.size() == 0) {
+            return false;
+            }
+                for (String fileName : getAll) {
+                    //System.out.println(fileName);
                     File childfile = new File(fileName);
-                     multifile.add(childfile);
-                     //	System.out.println(filename);
+                    multifile.add(childfile);
+                    //	System.out.println(filename);
                 }
-
+                return true;
         }
 
         /**
@@ -57,15 +75,22 @@ public class MultiHence {
             if (baseFile.isFile() || !baseFile.exists()) {
                 return list;
             }
+            if(baseFile.isDirectory()&&emptyFile(baseFile)){
+
+            }
             File[] files = baseFile.listFiles();
-            numberOfFile = files.length;
-            multiNodeCount = new int[numberOfFile];
+            //numberOfFile = files.length;
+            //multiNodeCount = new int[numberOfFile];
             for (File file : files) {
                 if (file.isDirectory()) {
-                    if(isAddDirectory){
-                        list.add(file.getAbsolutePath());
-                    }
-                    list.addAll(getAllFile(file.getAbsolutePath(),isAddDirectory));
+                  if(emptyFile(file)) {
+                      if (isAddDirectory) {
+                          list.add(file.getAbsolutePath());
+                          emptyFileName.add(file.getAbsolutePath());
+                      }
+                  }else {
+                      list.addAll(getAllFile(file.getAbsolutePath(), isAddDirectory));
+                  }
                 } else {
                     list.add(file.getAbsolutePath());
                 }
@@ -73,6 +98,13 @@ public class MultiHence {
             return list;
         }
 
+        public static boolean emptyFile(File file){
+            if(file.listFiles().length ==0){
+                return true;
+            }
+
+            return false;
+        }
 
 
         public static void fileEmpty(File f) throws IOException
@@ -87,8 +119,8 @@ public class MultiHence {
         public static void compress(File file) throws IOException
         {
             multiByteStream = displayByte(multifile);
-            System.out.println("multifiles元素个数:  "+multifile.size());
-            System.out.println("multiByteStream元素个数:  "+multiByteStream.size());
+           // System.out.println("multifiles元素个数:  "+multifile.size());
+            //System.out.println("multiByteStream元素个数:  "+multiByteStream.size());
             buildTree(map);
             int f =setPrefixcodes();
             Node node = priorityQ.peek();//frequency最低，huffman码最长的node
@@ -140,10 +172,19 @@ public class MultiHence {
                 //文件名
                 //byte[] childname = multifile.get(j).toString().getBytes("UTF-8");
                 String childname = multifile.get(j).toString();
+                int status;
+               if(emptyFileName.contains(childname)){
+                   status = 1;
+               }else{
+                   status = 0;
+               }
                 childname = new String(childname.getBytes(),"UTF-8");
-                int lenOfChildname = childname.length();
+                //到emptyFileName里面找
+
                 int  lenOfChildFile = multiByteStream.get(j).length;
-                detail = childname+"::"+lenOfChildname+"::"+lenOfChildFile;
+               // System.out.println(lenOfChildFile);
+                detail = childname+"::"+status+"::"+lenOfChildFile;
+
                 comp.append(detail);
                 comp.append('\n');
 
@@ -155,14 +196,12 @@ public class MultiHence {
 
                 }
 
-
-
-
-
                String str = "";
                String copyStr = "";
+               int count=0;
             for(int j =0;j<numberOfFile;j++) {
                 byte[] byteStream = multiByteStream.get(j);
+
                 for (int i = 0; i < byteStream.length; i++) {
                     int data = byteStream[i];
 
@@ -176,6 +215,7 @@ public class MultiHence {
                         br.write(c);
 
                         copyStr = "";
+                        count++;
                     }
                 }
 
@@ -183,7 +223,7 @@ public class MultiHence {
                     copyStr = str.substring(0, 8);
                     int c = Integer.parseInt(copyStr, 2);
                     str = str.substring(8, str.length());
-                    int d = c;
+                    count++;
                     br.write(c);
                     copyStr = "";
                 }
@@ -191,9 +231,12 @@ public class MultiHence {
                     String formatted = (str + "00000000").substring(0, 8);
                     int format = Integer.parseInt(formatted, 2);
                     br.write(format);
+                    count++;
 
                 }
-                br.write('\n');
+                lengthOfStream.add(count);
+            //  br.write('\n');
+               // System.out.println("count"+j+": "+count);
             }
 
             br.close();
@@ -290,7 +333,12 @@ public class MultiHence {
             int j =0;
             for (File file : multifile) {
               int i = (int) file.length();//返回字节数(byte)
+                if(i ==0){
+                   // continue;
+                }
                 multiNodeCount[j] = (int) file.length();
+
+               // System.out.println("len of file"+j+":  "+i);
                 byte[] bye = new byte[i];
                 try {
                     fis = new FileInputStream(file);
@@ -308,8 +356,27 @@ public class MultiHence {
             return multiByteStream;
         }
 
-//int first= byteStream[0];
-//int last = byteStream[byteStream.length-1];
-//System.out.println("byteStream length "+byteStream.length+"     byteStream[0]:"+byteStream[0]+"     byteStream[last]"+byteStream[byteStream.length-1]);
-//System.out.println("byteStream[0].get(data):"+symboltoCode.get(first)+"      byteStream[last].getdata:"+symboltoCode.get(last));
+/**
+ * for( String files : allFileName ){
+ * 			File fileToCompress = new File( files ) ;
+ * 			String fileType = "";
+ * 			output.write( files.getBytes().length );
+ * 			//String singleFilePath = new String( files.getBytes() ) ;
+ * 			//System.out.println( singleFilePath ) ;
+ * 			//System.out.println( files.length() );
+ * 		    for( int i = 0 ; i < files.getBytes().length ; i++ )
+ * 		    	output.write( files.getBytes()[ i ] );
+ *
+ * 		    for( int i = 0 ; i < fileNumber ; i++ ) {
+ * 			int singleFileNameLen = input.read();
+ * 			String singleFilePath = "" ;
+ * 			int fileTypeLen = 0 ;
+ * 			String fileType = "";
+ * 			byte[] b = new byte[ singleFileNameLen ] ;
+ * 			input.read( b , 0 , singleFileNameLen ) ;
+ * 			singleFilePath = new String( b ) ;
+ * 			String newSingleFilePath = TargetPos + singleFilePath.substring( firstIndexofFile ) ;
+ * 			allFileName.add( newSingleFilePath ) ; 
+ *
+ */
 }

@@ -14,7 +14,7 @@ public class Singlehedc {
     {
         try
         {
-            String sourcepath ="E:/Project 1/Test Cases/4/3.jpg.huf";
+            String sourcepath ="E:/Project 1/Test Cases/0.txt.huf";
             //String sourcepath = args[0];
             File file = new File(sourcepath);
             recreateMap_de(file);
@@ -46,34 +46,29 @@ public class Singlehedc {
 
     public static void recreateMap_de(File f) throws IOException
     {
-
-        BufferedReader b = new BufferedReader(new FileReader(f));
+        BufferedReader b = new BufferedReader(new InputStreamReader(new FileInputStream(f),"UTF-8"));
         if(f.length()==0)
         {
             fileEmpty_de(f);
         }
-        String mapp =b.readLine();
-        line1 = mapp.length();
+        BufferedInputStream b1 = new BufferedInputStream(new FileInputStream(f));
 
-        String arr[] =mapp.split(" ");
+        String tree = new String();
+        int x;
+        while((x = b1.read())!='\n'){
+         //   tree.append(x);
+
+        }
+
+
+        String arr[] =tree.split(" ");
         for (int i=0; i<arr.length;i++)
         {
             String regx= arr[i];
             String a[] = regx.split("=");
             CodetoSymb2.put(a[0],Byte.parseByte(a[1]));
         }
-        /**
-         * int k = 20;
-         * 		String temp = null;
-         * 		String temp1 = null;
-         * 		String temp2 = null;
-         * 		while(k>0) {
-         * 			temp= b.readLine();
-         * 			temp1= b.readLine();
-         * 			temp2= b.readLine();
-         * 			k--;
-         *                }
-         */
+
 
         String strFre = b.readLine();
         if(strFre.equals("")) {
@@ -83,7 +78,7 @@ public class Singlehedc {
             line2 += 1;
             String temp = b.readLine();
             numberOfFile = Integer.parseInt(temp);
-            System.out.println(numberOfFile);
+            //System.out.println(numberOfFile);
             line2 += temp.length();
             lenOfFileName= new int[numberOfFile];
             lenOfmultiStream = new int[numberOfFile];
@@ -102,18 +97,22 @@ public class Singlehedc {
                 lenOfFileName[j]=Integer.parseInt(detail[1]);
                 lenOfmultiStream[j] = Integer.parseInt(detail[2]);
             }
-            for(int i = 0; i<numberOfFile;i++){
-                System.out.println("文件名: "+nameOfFile[i]+" 文件名长度: "+lenOfFileName[i]+" byte数: "+lenOfmultiStream[i]);
-            }
+           // for(int i = 0; i<numberOfFile;i++){
+           //     System.out.println("文件名: "+nameOfFile[i]+" 文件名长度: "+lenOfFileName[i]+" byte数: "+lenOfmultiStream[i]);
+           // }
 
           //  reformMui_de(nameOfFile,lenOfmultiStream,f);
         }
         else {//单个文件
-
             int freq = Integer.parseInt(strFre);
+
+            b.close();
+            //bwrite.close();
             reformTextfile_de(CodetoSymb2, f, freq);
-        }
-        b.close();
+            }
+
+
+
     }
     public static void reformTextfile_de(HashMap<String, Byte> map, File f, int freq) throws IOException
     {
@@ -123,17 +122,18 @@ public class Singlehedc {
         //源文件名
         str = str.substring(0, str.length()-4);
         BufferedOutputStream bwrite = new BufferedOutputStream(new FileOutputStream(str));
-        System.out.println("line1: "+line1+"         line2: "+line2);
+       // System.out.println("line1: "+line1+"         line2: "+line2);
 
        // b1.skip(line1);
         while(b1.read()!='\n');
         while(b1.read()!='\n');
         int x = 0;
-
+       int count = 0;
         while ((x = b1.read()) != -1) {
 
             String formStr = Integer.toBinaryString(x);
             String format = ("00000000" + formStr).substring(formStr.length());
+            System.out.println(format);
             buildCode.append(format);//problem  buildCode :空的stringBuilder
             int len = buildCode.length();
             if(len >= 8){
@@ -141,14 +141,18 @@ public class Singlehedc {
                 buildCode.delete(0,writeback(bwrite,buildCode,freq,frequencyCounter));
 
             }
+            count++;
         }
-        if(buildCode.length() > 0){
+        int len = buildCode.length();
+        if(len> 1){
             writeback(bwrite,buildCode,freq,frequencyCounter);
         }
         //frequencyCounter = 0
 
         b1.close();
         bwrite.close();
+        //System.out.println("count:  "+count);
+
     }public static int writeback(BufferedOutputStream bwrite, StringBuilder buildCode, int freq,int frequencyCounter)throws IOException{
         int presentP = 0;
 
